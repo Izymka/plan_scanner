@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Детектор Дверей и Окон</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8fafc;
+            border: 3px dashed #cbd5e1;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            margin-bottom: 40px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-section:hover {
+            border-color: #4f46e5;
+            background: #f1f5f9;
+        }
+
+        .upload-section.dragover {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #64748b;
+        }
+
+        .upload-text {
+            font-size: 1.3em;
+            color: #334155;
+            margin-bottom: 20px;
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            margin-top: 40px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .results-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .stat-number {
+            font-size: 1.5em;
+            display: block;
+        }
+
+        .image-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .result-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .detections-list {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 30px;
+        }
+
+        .detections-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        .detection-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #4f46e5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .detection-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .detection-item.door {
+            border-left-color: #10b981;
+        }
+
+        .detection-item.window {
+            border-left-color: #3b82f6;
+        }
+
+        .detection-info {
+            flex: 1;
+        }
+
+        .detection-class {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .detection-class.door {
+            color: #10b981;
+        }
+
+        .detection-class.window {
+            color: #3b82f6;
+        }
+
+        .detection-coords {
+            color: #64748b;
+            font-size: 0.95em;
+        }
+
+        .detection-confidence {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .new-analysis-button {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .new-analysis-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .upload-section {
+                padding: 40px 20px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .detection-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚪 YOLO Детектор</h1>
+            <p>Детекция дверей и окон с помощью искусственного интеллекта</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section" id="upload-section">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Перетащите изображение сюда или нажмите для выбора</div>
+                <button class="upload-button" onclick="document.getElementById('file-input').click()">
+                    Выбрать изображение
+                </button>
+                <input type="file" id="file-input" accept="image/*">
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Анализируем изображение...</p>
+            </div>
+
+            <div class="error" id="error-message"></div>
+
+            <div class="results" id="results">
+                <div class="results-header">
+                    <h2 class="results-title">Результаты анализа</h2>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-number" id="total-objects">0</span>
+                            <span>Объектов</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="image-container">
+                    <img id="result-image" class="result-image" alt="Результат анализа">
+                </div>
+
+                <div class="detections-list">
+                    <h3 class="detections-title">Обнаруженные объекты</h3>
+                    <div id="detections-container"></div>
+                </div>
+
+                <button class="new-analysis-button" onclick="resetAnalysis()">
+                    Новый анализ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const uploadSection = document.getElementById('upload-section');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const errorMessage = document.getElementById('error-message');
+        const resultImage = document.getElementById('result-image');
+        const totalObjects = document.getElementById('total-objects');
+        const detectionsContainer = document.getElementById('detections-container');
+
+        // Drag and drop functionality
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showError('Пожалуйста, выберите файл изображения.');
+                return;
+            }
+
+            // Validate file size (16MB max)
+            if (file.size > 16 * 1024 * 1024) {
+                showError('Размер файла не должен превышать 16MB.');
+                return;
+            }
+
+            uploadImage(file);
+        }
+
+        function uploadImage(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Show loading
+            hideAll();
+            loading.style.display = 'block';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loading.style.display = 'none';
+                
+                if (data.success) {
+                    showResults(data);
+                } else {
+                    showError(data.error || 'Произошла ошибка при обработке изображения.');
+                }
+            })
+            .catch(error => {
+                loading.style.display = 'none';
+                showError('Произошла ошибка при отправке файла.');
+                console.error('Error:', error);
+            });
+        }
+
+        function showResults(data) {
+            // Set image
+            resultImage.src = 'data:image/jpeg;base64,' + data.image;
+            
+            // Set statistics
+            totalObjects.textContent = data.total_objects;
+            
+            // Clear previous detections
+            detectionsContainer.innerHTML = '';
+            
+            // Add detections
+            data.detections.forEach((detection, index) => {
+                const detectionItem = document.createElement('div');
+                detectionItem.className = `detection-item ${detection.class}`;
+                
+                detectionItem.innerHTML = `
+                    <div class="detection-info">
+                        <div class="detection-class ${detection.class}">
+                            ${detection.class === 'door' ? '🚪 Дверь' : '🪟 Окно'}
+                        </div>
+                        <div class="detection-coords">
+                            Центр: (${detection.center.x}, ${detection.center.y})
+                        </div>
+                    </div>
+                    <div class="detection-confidence">
+                        ${(detection.confidence * 100).toFixed(1)}%
+                    </div>
+                `;
+                
+                detectionsContainer.appendChild(detectionItem);
+            });
+            
+            results.style.display = 'block';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideAll() {
+            results.style.display = 'none';
+            errorMessage.style.display = 'none';
+        }
+
+        function resetAnalysis() {
+            hideAll();
+            uploadSection.style.display = 'block';
+            fileInput.value = '';
+        }
+    </script>
+</body>
+</html>
