@@ -11,10 +11,12 @@ from app.yolo_model import YOLOModel
 from app.utils import process_image, allowed_file
 import uvicorn
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 app = FastAPI(title="YOLO Детектор Дверей и Окон", version="1.0.0")
 
 # Монтируем статические файлы
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
 # Инициализация модели
 model = YOLOModel('door_window_yolo11_detection.pt')
@@ -22,8 +24,10 @@ model = YOLOModel('door_window_yolo11_detection.pt')
 @app.get("/", response_class=HTMLResponse)
 async def index():
     """Главная страница с HTML интерфейсом"""
-    with open("templates/index.html", "r", encoding="utf-8") as f:
+    template_path = os.path.join(BASE_DIR, "templates", "index.html")
+    with open(template_path, "r", encoding="utf-8") as f:
         html_content = f.read()
+
     return HTMLResponse(content=html_content)
 
 @app.post("/upload")
