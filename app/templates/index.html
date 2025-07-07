@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -311,14 +311,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚪 YOLO Детектор</h1>
-            <p>Детекция дверей и окон с помощью искусственного интеллекта</p>
+            <h1>🚪 Детекция дверей и окон с помощью YOLO</h1>
+            <p>Получение их координат и назначения помещения</p>
         </div>
 
         <div class="main-content">
             <div class="upload-section" id="upload-section">
                 <div class="upload-icon">📸</div>
-                <div class="upload-text">Перетащите изображение сюда или нажмите для выбора</div>
+                <div class="upload-text">Перетащите 2D план сюда или нажмите для выбора</div>
                 <button class="upload-button" onclick="document.getElementById('file-input').click()">
                     Выбрать изображение
                 </button>
@@ -493,5 +493,9 @@
             fileInput.value = '';
         }
     </script>
+    <footer style="text-align: center; padding: 20px; background: #f1f5f9; color: #64748b; font-size: 0.95em; margin-top: 40px;">
+        Разработано <a href="https://github.com/Izymka/plan_scanner" target="_blank" style="color: #4f46e5; text-decoration: none; font-weight: 600;">на GitHub</a>
+    </footer>
+    
 </body>
 </html>

@@ -1,6 +1,4 @@
 import cv2
-import numpy as np
-import os
 from config import settings
 
 def allowed_file(filename):
@@ -10,7 +8,11 @@ def allowed_file(filename):
     :param filename: имя файла
     :return: True если файл поддерживается, False иначе
     """
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in settings.allowed_extensions
+    return '.' in filename and (
+        filename.rsplit('.', 1)[1]
+        .lower() in settings['allowed_extensions']
+        )
+
 
 def process_image(image, results):
     """
@@ -25,10 +27,10 @@ def process_image(image, results):
     height, width = image.shape[:2]
     
     detections = []
-    class_names = settings.class_names
+    class_names = settings['class_names']
     
     # Цвета для разных классов из конфигурации
-    colors = settings.colors
+    colors = settings['colors']
     
     for result in results:
         boxes = result.boxes
@@ -47,20 +49,32 @@ def process_image(image, results):
                 confidence = float(box.conf[0].cpu().numpy())
                 
                 # Получаем название класса
-                class_name = class_names[class_id] if class_id < len(class_names) else f"unknown_{class_id}"
+                class_name = (
+                    class_names[class_id] 
+                    if class_id < len(class_names) 
+                    else f"unknown_{class_id}"
+                )
                 
                 # Получаем цвет для класса
-                color = colors.get(class_name, (0, 0, 255))  # Красный по умолчанию
+                # Красный по умолчанию
+                color = colors.get(class_name, (0, 0, 255))  
                 
                 # Рисуем bbox
                 cv2.rectangle(processed_image, (x1, y1), (x2, y2), color, 2)
                 
                 # Рисуем центр
-                cv2.circle(processed_image, (x_center, y_center), 5, color, -1)
+                cv2.circle(processed_image, 
+                           (x_center, y_center), 
+                           5, 
+                           color, 
+                           -1)
                 
                 # Добавляем текст с классом и уверенностью
                 label = f"{class_name}: {confidence:.2f}"
-                label_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
+                label_size = cv2.getTextSize(label, 
+                                             cv2.FONT_HERSHEY_SIMPLEX, 
+                                             0.6, 
+                                             2)[0]
                 
                 # Рисуем фон для текста
                 cv2.rectangle(processed_image, 
@@ -102,4 +116,4 @@ def get_supported_image_extensions():
     """
     Возвращает список поддерживаемых расширений изображений.
     """
-    return ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif']
+    return ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', 'webp']

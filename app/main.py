@@ -16,7 +16,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = FastAPI(title="YOLO Детектор Дверей и Окон", version="1.0.0")
 
 # Монтируем статические файлы
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+app.mount("/static", 
+          StaticFiles(directory=os.path.join(BASE_DIR, "static")), 
+          name="static")
 
 # Инициализация модели
 model = YOLOModel('door_window_yolo11_detection.pt')
@@ -41,7 +43,8 @@ async def upload_file(file: UploadFile = File(...)):
     
     # Проверяем формат файла
     if not allowed_file(file.filename):
-        raise HTTPException(status_code=400, detail="Неподдерживаемый формат файла")
+        raise HTTPException(status_code=400, 
+                            detail="Неподдерживаемый формат файла")
     
     try:
         # Читаем изображение
@@ -74,7 +77,8 @@ async def upload_file(file: UploadFile = File(...)):
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка обработки изображения: {str(e)}")
+        raise HTTPException(status_code=500, 
+                            detail=f"Ошибка обработки изображения: {str(e)}")
 
 @app.get("/health")
 async def health_check():
